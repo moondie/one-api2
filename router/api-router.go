@@ -11,6 +11,7 @@ import (
 func SetApiRouter(router *gin.Engine) {
 	apiRouter := router.Group("/api")
 	apiRouter.Use(gzip.Gzip(gzip.DefaultCompression))
+	apiRouter.POST("/telegram/:token", middleware.Telegram(), controller.TelegramBotWebHook)
 	apiRouter.Use(middleware.GlobalAPIRateLimit())
 	{
 		apiRouter.GET("/status", controller.GetStatus)
@@ -61,6 +62,12 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			optionRoute.GET("/", controller.GetOptions)
 			optionRoute.PUT("/", controller.UpdateOption)
+			optionRoute.GET("/telegram", controller.GetTelegramMenuList)
+			optionRoute.POST("/telegram", controller.AddOrUpdateTelegramMenu)
+			optionRoute.GET("/telegram/status", controller.GetTelegramBotStatus)
+			optionRoute.PUT("/telegram/reload", controller.ReloadTelegramBot)
+			optionRoute.GET("/telegram/:id", controller.GetTelegramMenu)
+			optionRoute.DELETE("/telegram/:id", controller.DeleteTelegramMenu)
 		}
 		channelRoute := apiRouter.Group("/channel")
 		channelRoute.Use(middleware.AdminAuth())
@@ -74,6 +81,8 @@ func SetApiRouter(router *gin.Engine) {
 			channelRoute.GET("/update_balance/:id", controller.UpdateChannelBalance)
 			channelRoute.POST("/", controller.AddChannel)
 			channelRoute.PUT("/", controller.UpdateChannel)
+			channelRoute.PUT("/batch/azure_api", controller.BatchUpdateChannelsAzureApi)
+			channelRoute.PUT("/batch/del_model", controller.BatchDelModelChannels)
 			channelRoute.DELETE("/disabled", controller.DeleteDisabledChannel)
 			channelRoute.DELETE("/:id", controller.DeleteChannel)
 		}
@@ -120,4 +129,5 @@ func SetApiRouter(router *gin.Engine) {
 			analyticsRoute.GET("/redemption_period", controller.GetRedemptionStatisticsByPeriod)
 		}
 	}
+
 }
