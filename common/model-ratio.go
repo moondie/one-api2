@@ -89,10 +89,11 @@ func init() {
 		// $0.80/million tokens $2.40/million tokens
 		"claude-instant-1": {[]float64{0.4, 1.2}, ChannelTypeAnthropic},
 		// $8.00/million tokens $24.00/million tokens
-		"claude-2":   {[]float64{4, 12}, ChannelTypeAnthropic},
-		"claude-2.0": {[]float64{4, 12}, ChannelTypeAnthropic},
-		"claude-2.1": {[]float64{4, 12}, ChannelTypeAnthropic},
-
+		"claude-2":                 {[]float64{4, 12}, ChannelTypeAnthropic},
+		"claude-2.0":               {[]float64{4, 12}, ChannelTypeAnthropic},
+		"claude-2.1":               {[]float64{4, 12}, ChannelTypeAnthropic},
+		"claude-3-opus-20240229":   {[]float64{7.5, 22.5}, ChannelTypeAnthropic},
+		"claude-3-sonnet-20240229": {[]float64{1.3, 3.9}, ChannelTypeAnthropic},
 		// ￥0.012 / 1k tokens ￥0.012 / 1k tokens
 		"ERNIE-Bot": {[]float64{0.8572, 0.8572}, ChannelTypeBaidu},
 		// 0.024元/千tokens 0.048元/千tokens
