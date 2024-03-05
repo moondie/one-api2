@@ -12,7 +12,6 @@ import (
 
 type claudeStreamHandler struct {
 	Usage   *types.Usage
-	Role    string
 	Request *types.ChatCompletionRequest
 }
 
@@ -158,13 +157,14 @@ func (p *ClaudeProvider) convertToChatOpenai(response *ClaudeResponse, request *
 // 转换为OpenAI聊天流式请求体
 func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan string, errChan chan error) {
 	// 如果rawLine 前缀不为data:，则直接返回
-	if !strings.HasPrefix(string(*rawLine), "event: message_delta\ndata: {\"type\"") {
+	str := strings.Split(string(*rawLine), "\n")[1]
+	if !strings.HasPrefix(str, "data: {\"type\"") {
 		*rawLine = nil
 		return
 	}
 
 	// 去除前缀
-	*rawLine = []byte(strings.Split(string(*rawLine), "\n")[1][6:])
+	*rawLine = []byte(str[6:])
 
 	var claudeResponse *ClaudeStreamResponse
 	err := json.Unmarshal(*rawLine, claudeResponse)
@@ -188,7 +188,6 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 	switch claudeResponse.Type {
 	case "message_start":
 		{
-			h.Role = claudeResponse.Message.Role
 			h.Usage.PromptTokens = claudeResponse.Message.InputTokens
 		}
 	case "content_block_delta":
