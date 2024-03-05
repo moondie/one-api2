@@ -166,6 +166,11 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 	*rawLine = (*rawLine)[6:]
 
 	var claudeResponse *ClaudeStreamResponse
+	if *rawLine == nil {
+		common.SysError("rawLine is nil")
+	} else {
+		common.SysError("rawLine is " + string(*rawLine))
+	}
 	err := json.Unmarshal(*rawLine, claudeResponse)
 	if err != nil {
 		errChan <- common.ErrorToOpenAIError(err)
