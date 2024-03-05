@@ -2,7 +2,6 @@ package claude
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"one-api/common"
@@ -13,7 +12,7 @@ import (
 
 type claudeStreamHandler struct {
 	Usage   *types.Usage
-	Role 	string
+	Role    string
 	Request *types.ChatCompletionRequest
 }
 
@@ -84,27 +83,27 @@ func (p *ClaudeProvider) getChatRequest(request *types.ChatCompletionRequest) (*
 
 func convertFromChatOpenai(request *types.ChatCompletionRequest) *ClaudeRequest {
 	claudeRequest := ClaudeRequest{
-		Model:             request.Model,
-		Messages:          nil,
-		System:		   nil,
-		MaxTokens:	   request.MaxTokens,
-		StopSequences:     nil,
-		Temperature:       request.Temperature,
-		TopP:              request.TopP,
-		Stream:            request.Stream,
+		Model:         request.Model,
+		Messages:      nil,
+		System:        "",
+		MaxTokens:     request.MaxTokens,
+		StopSequences: nil,
+		Temperature:   request.Temperature,
+		TopP:          request.TopP,
+		Stream:        request.Stream,
 	}
-	if claudeRequest.MaxTokensToSample == 0 {
+	if claudeRequest.MaxTokens == 0 {
 		claudeRequest.MaxTokens = 4096
 	}
 	var messages []Message
 	for _, message := range request.Messages {
 		if message.Role != "system" {
-			messages = append(messages,Message{
-				Role:		message.Role,
-				content:	message.Content,
-				})
-		} else{
-			claudeRequest.System = message.Content
+			messages = append(messages, Message{
+				Role:    message.Role,
+				Content: message.Content.(string),
+			})
+		} else {
+			claudeRequest.System = message.Content.(string)
 		}
 	}
 	return &claudeRequest
@@ -138,7 +137,7 @@ func (p *ClaudeProvider) convertToChatOpenai(response *ClaudeResponse, request *
 	}
 
 	completionTokens := response.Usage.OutputTokens
-	
+
 	promptTokens := response.Usage.InputTokens
 
 	openaiResponse.Usage.PromptTokens = promptTokens
@@ -159,7 +158,7 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 	}
 
 	// 去除前缀
-	*rawLine = []byte(strings.Split(string(*rawLine)，"\n")[1][6:])
+	*rawLine = []byte(strings.Split(string(*rawLine), "\n")[1][6:])
 
 	var claudeResponse *ClaudeStreamResponse
 	err := json.Unmarshal(*rawLine, claudeResponse)
@@ -179,20 +178,23 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 		*rawLine = requester.StreamClosed
 		return
 	}
-	
 
-	switch claudeResponse.Type{
-		case "message_start":{
+	switch claudeResponse.Type {
+	case "message_start":
+		{
 			h.Role = claudeResponse.Message.Role
 			h.Usage.PromptTokens = claudeResponse.Message.InputTokens
 		}
-		case "content_block_delta":{
+	case "content_block_delta":
+		{
 			h.convertToOpenaiStream(claudeResponse, dataChan, errChan)
 		}
-		case "message_delta":{
+	case "message_delta":
+		{
 			h.Usage.CompletionTokens = claudeResponse.Delta.Usage.OutputTokens
 		}
-		default: return
+	default:
+		return
 	}
 }
 
@@ -212,6 +214,4 @@ func (h *claudeStreamHandler) convertToOpenaiStream(claudeResponse *ClaudeStream
 
 	responseBody, _ := json.Marshal(chatCompletion)
 	dataChan <- string(responseBody)
-
-	h.Usage.PromptTokens += common.CountTokenText(claudeResponse.Completion, h.Request.Model)
 }
