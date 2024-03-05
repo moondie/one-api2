@@ -157,7 +157,7 @@ func (p *ClaudeProvider) convertToChatOpenai(response *ClaudeResponse, request *
 // 转换为OpenAI聊天流式请求体
 func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan string, errChan chan error) {
 	// 如果rawLine 前缀不为data:，则直接返回
-	str := strings.Split(string(*rawLine), "\n")[1]
+	str := string(*rawLine)
 	if !strings.HasPrefix(str, "data: {\"type\"") {
 		*rawLine = nil
 		return
