@@ -16,10 +16,15 @@ type ResContent struct {
 	Type string `json:"type"`
 }
 
+type Message struct {
+	Role 	string `json:"role"`
+	Content string `json:"content"`
+}
+
 type ClaudeRequest struct {
 	Model             string   		`json:"model"`
 	System            string  		`json:"system,omitempty"`
-	Messages          *types.Messages   	`json:"messages"`
+	Messages          []Message	   	`json:"messages"`
 	MaxTokens 	  int      		`json:"max_tokens"`
 	StopSequences     []string 		`json:"stop_sequences,omitempty"`
 	Temperature       float64  		`json:"temperature,omitempty"`
