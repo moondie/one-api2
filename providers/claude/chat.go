@@ -102,6 +102,7 @@ func convertFromChatOpenai(request *types.ChatCompletionRequest) *ClaudeRequest 
 				Role:    message.Role,
 				Content: message.Content.(string),
 			})
+			claudeRequest.Messages = messages
 		} else {
 			claudeRequest.System = message.Content.(string)
 		}
