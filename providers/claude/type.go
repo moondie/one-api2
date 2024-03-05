@@ -65,5 +65,5 @@ type ClaudeStreamResponse struct {
 	Message ClaudeResponse `json:"message,omitempty"`
 	Index   int            `json:"index,omitempty"`
 	Delta   `json:"delta,omitempty"`
-	ClaudeResponseError
+	Error	ClaudeError `json:"error,omitempty"`
 }
