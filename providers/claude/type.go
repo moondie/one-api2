@@ -32,10 +32,6 @@ type ClaudeRequest struct {
 	Stream bool `json:"stream,omitempty"`
 }
 
-type ClaudeResponseError struct {
-	Error ClaudeError `json:"error,omitempty"`
-}
-
 type Usage struct {
 	InputTokens  int `json:"input_tokens"`
 	OutputTokens int `json:"output_tokens,omitempty"`
@@ -49,7 +45,7 @@ type ClaudeResponse struct {
 	StopSequence string       `json:"stop_sequence,omitempty"`
 	Model        string       `json:"model"`
 	Usage        `json:"usage,omitempty"`
-	ClaudeResponseError
+	Error        ClaudeError `json:"error,omitempty"`
 }
 
 type Delta struct {
@@ -65,5 +61,5 @@ type ClaudeStreamResponse struct {
 	Message ClaudeResponse `json:"message,omitempty"`
 	Index   int            `json:"index,omitempty"`
 	Delta   `json:"delta,omitempty"`
-	Error	ClaudeError `json:"error,omitempty"`
+	Error   ClaudeError `json:"error,omitempty"`
 }

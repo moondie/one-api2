@@ -110,7 +110,7 @@ func convertFromChatOpenai(request *types.ChatCompletionRequest) *ClaudeRequest 
 }
 
 func (p *ClaudeProvider) convertToChatOpenai(response *ClaudeResponse, request *types.ChatCompletionRequest) (openaiResponse *types.ChatCompletionResponse, errWithCode *types.OpenAIErrorWithStatusCode) {
-	error := errorHandle(&response.ClaudeResponseError)
+	error := errorHandle(&response.Error)
 	if error != nil {
 		errWithCode = &types.OpenAIErrorWithStatusCode{
 			OpenAIError: *error,
@@ -172,7 +172,7 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 		return
 	}
 
-	error := errorHandle(&claudeResponse.ClaudeResponseError)
+	error := errorHandle(&claudeResponse.Error)
 	if error != nil {
 		errChan <- error
 		return
