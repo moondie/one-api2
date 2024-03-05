@@ -164,7 +164,7 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 	}
 
 	// 去除前缀
-	*rawLine = []byte(str[6:])
+	*rawLine = (*rawLine)[6:]
 
 	var claudeResponse *ClaudeStreamResponse
 	err := json.Unmarshal(*rawLine, claudeResponse)
