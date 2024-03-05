@@ -135,6 +135,11 @@ func (p *ClaudeProvider) convertToChatOpenai(response *ClaudeResponse, request *
 		Created: common.GetTimestamp(),
 		Choices: []types.ChatCompletionChoice{choice},
 		Model:   response.Model,
+		Usage: &types.Usage{
+			CompletionTokens: 0,
+			PromptTokens:     0,
+			TotalTokens:      0,
+		},
 	}
 
 	completionTokens := response.Usage.OutputTokens
