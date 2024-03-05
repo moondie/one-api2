@@ -192,7 +192,7 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 		}
 	case "content_block_delta":
 		{
-			h.convertToOpenaiStream(claudeResponse, dataChan, errChan)
+			h.convertToOpenaiStream(&claudeResponse, dataChan, errChan)
 		}
 	case "message_delta":
 		{
