@@ -17,14 +17,14 @@ type ResContent struct {
 }
 
 type ClaudeRequest struct {
-	Model             string   `json:"model"`
-	System            string   `json:"system,omitempty"`
-	Messages          string   `json:"messages"`
-	MaxTokens 	  int      `json:"max_tokens"`
-	StopSequences     []string `json:"stop_sequences,omitempty"`
-	Temperature       float64  `json:"temperature,omitempty"`
-	TopP              float64  `json:"top_p,omitempty"`
-	TopK              int      `json:"top_k,omitempty"`
+	Model             string   		`json:"model"`
+	System            string  		`json:"system,omitempty"`
+	Messages          *types.Messages   	`json:"messages"`
+	MaxTokens 	  int      		`json:"max_tokens"`
+	StopSequences     []string 		`json:"stop_sequences,omitempty"`
+	Temperature       float64  		`json:"temperature,omitempty"`
+	TopP              float64  		`json:"top_p,omitempty"`
+	TopK              int      		`json:"top_k,omitempty"`
 	//ClaudeMetadata    `json:"metadata,omitempty"`
 	Stream bool `json:"stream,omitempty"`
 }
