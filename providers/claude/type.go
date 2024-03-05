@@ -18,7 +18,7 @@ type ResContent struct {
 
 type ClaudeRequest struct {
 	Model             string   `json:"model"`
-	System            string    `json:"system"`
+	System            string   `json:"system,omitempty"`
 	Messages          string   `json:"messages"`
 	MaxTokens 	  int      `json:"max_tokens"`
 	StopSequences     []string `json:"stop_sequences,omitempty"`
