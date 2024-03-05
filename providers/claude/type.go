@@ -37,6 +37,12 @@ type ClaudeRequest struct {
 type ClaudeResponseError struct {
 	Error ClaudeError `json:"error,omitempty"`
 }
+
+type Usage struct {
+	InputTokens	int	`json:"input_tokens"`
+	OutputTokens	int	`json:"output_tokens"`
+}
+
 type ClaudeResponse struct {
 	Content	   	[]ResContent 	`json:"content"`
 	Id	   	string		`json:"id"`
@@ -44,6 +50,6 @@ type ClaudeResponse struct {
 	StopReason 	string       	`json:"stop_reason"`
 	StopSequence	string		`json:"stop_sequence,omitempty"`
 	Model      	string      	`json:"model"`
-	Usage      	*types.Usage 	`json:"usage,omitempty"`
+	Usage      		 	`json:"usage,omitempty"`
 	ClaudeResponseError
 }
