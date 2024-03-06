@@ -120,7 +120,7 @@ func (p *ClaudeProvider) convertToChatOpenai(response *ClaudeResponse, request *
 		}
 		return
 	}
-
+	// TODO 实现choices[]
 	choice := types.ChatCompletionChoice{
 		Index: 0,
 		Message: types.ChatCompletionMessage{
