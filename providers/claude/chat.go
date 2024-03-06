@@ -187,7 +187,7 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 
 	case "message_delta":
 		h.convertToOpenaiStream(&claudeResponse, dataChan, errChan)
-		h.Usage.CompletionTokens = claudeResponse.Delta.Usage.OutputTokens
+		h.Usage.CompletionTokens = claudeResponse.Usage.OutputTokens
 		h.Usage.TotalTokens = h.Usage.PromptTokens + h.Usage.CompletionTokens
 
 	case "content_block_delta":
