@@ -75,6 +75,8 @@ func stopReasonClaude2OpenAI(reason string) string {
 	switch reason {
 	case "stop_sequence":
 		return types.FinishReasonStop
+	case "end_turn":
+		return types.FinishReasonStop
 	case "max_tokens":
 		return types.FinishReasonLength
 	default:

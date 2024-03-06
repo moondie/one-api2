@@ -11,6 +11,7 @@ import (
 )
 
 type claudeStreamHandler struct {
+	Id      string
 	Usage   *types.Usage
 	Request *types.ChatCompletionRequest
 }
@@ -106,6 +107,7 @@ func convertFromChatOpenai(request *types.ChatCompletionRequest) *ClaudeRequest 
 			claudeRequest.System = message.Content.(string)
 		}
 	}
+
 	return &claudeRequest
 }
 
@@ -126,7 +128,7 @@ func (p *ClaudeProvider) convertToChatOpenai(response *ClaudeResponse, request *
 			Content: strings.TrimPrefix(response.Content[0].Text, " "),
 			Name:    nil,
 		},
-		FinishReason: response.StopReason,
+		FinishReason: stopReasonClaude2OpenAI(response.StopReason),
 	}
 	openaiResponse = &types.ChatCompletionResponse{
 		ID:      response.Id,
@@ -166,7 +168,6 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 	*rawLine = (*rawLine)[6:]
 
 	var claudeResponse ClaudeStreamResponse
-
 	err := json.Unmarshal(*rawLine, &claudeResponse)
 	if err != nil {
 		errChan <- common.ErrorToOpenAIError(err)
@@ -179,40 +180,45 @@ func (h *claudeStreamHandler) handlerStream(rawLine *[]byte, dataChan chan strin
 		return
 	}
 
-	if claudeResponse.Delta.StopReason == "stop_sequence" {
-		errChan <- io.EOF
-		*rawLine = requester.StreamClosed
-		return
-	}
-
 	switch claudeResponse.Type {
 	case "message_start":
-		{
-			h.Usage.PromptTokens = claudeResponse.Message.InputTokens
-		}
-	case "content_block_delta":
-		{
-			h.convertToOpenaiStream(&claudeResponse, dataChan, errChan)
-		}
+		h.Usage.PromptTokens = claudeResponse.Message.Usage.InputTokens
+		h.Id = claudeResponse.Message.Id
+
 	case "message_delta":
-		{
-			h.Usage.CompletionTokens = claudeResponse.Delta.Usage.OutputTokens
-		}
+		h.convertToOpenaiStream(&claudeResponse, dataChan, errChan)
+		h.Usage.CompletionTokens = claudeResponse.Delta.OutputTokens
+		h.Usage.TotalTokens = h.Usage.PromptTokens + h.Usage.CompletionTokens
+
+	case "content_block_delta":
+		h.convertToOpenaiStream(&claudeResponse, dataChan, errChan)
+
+	case "message_stop":
+		errChan <- io.EOF
+		*rawLine = requester.StreamClosed
+
 	default:
 		return
 	}
 }
 
 func (h *claudeStreamHandler) convertToOpenaiStream(claudeResponse *ClaudeStreamResponse, dataChan chan string, errChan chan error) {
-	var choice types.ChatCompletionStreamChoice
+	choice := types.ChatCompletionStreamChoice{
+		Index: claudeResponse.Index,
+	}
 
-	choice.Delta.Content = claudeResponse.Delta.Text
+	if claudeResponse.Delta.Text != "" {
+		choice.Delta.Content = claudeResponse.Delta.Text
+	}
+
 	finishReason := stopReasonClaude2OpenAI(claudeResponse.Delta.StopReason)
-	if finishReason != "null" {
+	if finishReason != "" {
 		choice.FinishReason = &finishReason
 	}
 	chatCompletion := types.ChatCompletionStreamResponse{
+		ID:      h.Id,
 		Object:  "chat.completion.chunk",
+		Created: common.GetTimestamp(),
 		Model:   h.Request.Model,
 		Choices: []types.ChatCompletionStreamChoice{choice},
 	}
