@@ -14,14 +14,26 @@ type ResContent struct {
 	Type string `json:"type"`
 }
 
+type ContentSource struct {
+	Type      string `json:"type"`
+	MediaType string `json:"media_type"`
+	Data      string `json:"data"`
+}
+
+type MessageContent struct {
+	Type   string         `json:"type"`
+	Text   string         `json:"text,omitempty"`
+	Source *ContentSource `json:"source,omitempty"`
+}
+
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string           `json:"role"`
+	Content []MessageContent `json:"content"`
 }
 
 type ClaudeRequest struct {
 	Model         string    `json:"model"`
-	System        string    `json:"system,omitempty"`
+	System        *string   `json:"system,omitempty"`
 	Messages      []Message `json:"messages"`
 	MaxTokens     int       `json:"max_tokens"`
 	StopSequences []string  `json:"stop_sequences,omitempty"`
@@ -33,19 +45,20 @@ type ClaudeRequest struct {
 }
 
 type Usage struct {
-	InputTokens  int `json:"input_tokens"`
+	InputTokens  int `json:"input_tokens,omitempty"`
 	OutputTokens int `json:"output_tokens,omitempty"`
 }
 
 type ClaudeResponse struct {
-	Content      []ResContent `json:"content"`
 	Id           string       `json:"id"`
+	Type         string       `json:"type"`
 	Role         string       `json:"role"`
-	StopReason   string       `json:"stop_reason"`
-	StopSequence string       `json:"stop_sequence,omitempty"`
+	Content      []ResContent `json:"content"`
 	Model        string       `json:"model"`
-	Usage        `json:"usage,omitempty"`
-	Error        ClaudeError `json:"error,omitempty"`
+	StopReason   string       `json:"stop_reason,omitempty"`
+	StopSequence string       `json:"stop_sequence,omitempty"`
+	Usage        Usage        `json:"usage,omitempty"`
+	Error        ClaudeError  `json:"error,omitempty"`
 }
 
 type Delta struct {
@@ -59,7 +72,7 @@ type ClaudeStreamResponse struct {
 	Type    string         `json:"type"`
 	Message ClaudeResponse `json:"message,omitempty"`
 	Index   int            `json:"index,omitempty"`
-	Delta   `json:"delta,omitempty"`
-	Usage   `json:"usage,omitempty"`
-	Error   ClaudeError `json:"error,omitempty"`
+	Delta   Delta          `json:"delta,omitempty"`
+	Usage   Usage          `json:"usage,omitempty"`
+	Error   ClaudeError    `json:"error,omitempty"`
 }
