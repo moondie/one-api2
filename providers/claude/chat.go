@@ -92,11 +92,17 @@ func convertFromChatOpenai(request *types.ChatCompletionRequest) (*ClaudeRequest
 		Messages:      []Message{},
 		System:        nil,
 		MaxTokens:     request.MaxTokens,
-		StopSequences: nil,
+		StopSequences: request.Stop,
 		Temperature:   request.Temperature,
-		TopP:          request.TopP,
+		TopP:          nil,
 		Stream:        request.Stream,
 	}
+	var top_p float64
+	if request.TopP != 1.0 {
+		top_p = request.TopP
+		claudeRequest.TopP = &top_p
+	}
+
 	if claudeRequest.MaxTokens == 0 {
 		claudeRequest.MaxTokens = 4096
 	}
