@@ -144,7 +144,7 @@ func InitRecharge(quota int, payType string, userId int) (payUrl string, TradeNo
 		UserId:      userId,
 		TradeNo:     transactionID,
 		Status:      1,
-		Name:        "VIP会员",
+		Name:        "充值",
 		Quota:       quota * int(common.QuotaPerUnit),
 		CreatedTime: common.GetTimestamp(),
 	}

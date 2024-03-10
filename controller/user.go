@@ -164,7 +164,8 @@ func Register(c *gin.Context) {
 	if common.EmailVerificationEnabled {
 		cleanUser.Email = user.Email
 	}
-	if err := cleanUser.Insert(inviterId); err != nil {
+	err, id := cleanUser.Insert(inviterId)
+	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"message": err.Error(),
@@ -172,7 +173,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	cleanToken := model.Token{
-		UserId:         c.GetInt("id"),
+		UserId:         id,
 		Name:           "default",
 		Key:            common.GenerateKey(),
 		CreatedTime:    common.GetTimestamp(),
@@ -551,7 +552,7 @@ func CreateUser(c *gin.Context) {
 		Password:    user.Password,
 		DisplayName: user.DisplayName,
 	}
-	if err := cleanUser.Insert(0); err != nil {
+	if err, _ := cleanUser.Insert(0); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"message": err.Error(),

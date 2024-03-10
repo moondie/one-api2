@@ -101,12 +101,12 @@ func DeleteUserById(id int) (err error) {
 	return user.Delete()
 }
 
-func (user *User) Insert(inviterId int) error {
+func (user *User) Insert(inviterId int) (errret error, id int) {
 	var err error
 	if user.Password != "" {
 		user.Password, err = common.Password2Hash(user.Password)
 		if err != nil {
-			return err
+			return err, -1
 		}
 	}
 	user.Quota = common.QuotaForNewUser
@@ -115,7 +115,7 @@ func (user *User) Insert(inviterId int) error {
 	user.CreatedTime = common.GetTimestamp()
 	result := DB.Create(user)
 	if result.Error != nil {
-		return result.Error
+		return result.Error, -1
 	}
 	if common.QuotaForNewUser > 0 {
 		RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("新用户注册赠送 %s", common.LogQuota(common.QuotaForNewUser)))
@@ -130,7 +130,7 @@ func (user *User) Insert(inviterId int) error {
 			RecordLog(inviterId, LogTypeSystem, fmt.Sprintf("邀请用户赠送 %s", common.LogQuota(common.QuotaForInviter)))
 		}
 	}
-	return nil
+	return nil, user.Id
 }
 
 func (user *User) Update(updatePassword bool) error {
