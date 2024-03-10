@@ -1,9 +1,20 @@
 package model
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"math/rand"
+	"net/http"
+	"net/url"
 	"one-api/common"
+	"os"
+	"slices"
+	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -18,6 +29,17 @@ type Redemption struct {
 	CreatedTime  int64  `json:"created_time" gorm:"bigint"`
 	RedeemedTime int64  `json:"redeemed_time" gorm:"bigint"`
 	Count        int    `json:"count" gorm:"-:all"` // only for api request
+}
+
+type RechargeLog struct {
+	Id           int    `json:"id"`
+	UserId       int    `json:"user_id"`
+	TradeNo      string `json:"trade_no" gorm:"type:char(20);uniqueIndex"`
+	Status       int    `json:"status" gorm:"default:1"` //1:未支付，2：已支付
+	Name         string `json:"name" gorm:"index"`
+	RedeemedTime int64  `json:"redeemed_time" gorm:"bigint"`
+	CreatedTime  int64  `json:"created_time" gorm:"bigint"`
+	Quota        int    `json:"quota" gorm:"default:100"`
 }
 
 var allowedRedemptionslOrderFields = map[string]bool{
@@ -85,6 +107,173 @@ func Redeem(key string, userId int) (quota int, err error) {
 	}
 	RecordLog(userId, LogTypeTopup, fmt.Sprintf("通过兑换码充值 %s", common.LogQuota(redemption.Quota)))
 	return redemption.Quota, nil
+}
+
+type RechargeResponse struct {
+	Code      int    `json:"code"`
+	Msg       string `json:"msg,omitempty"`
+	TradeNo   string `json:"trade_no"`
+	PayUrl    string `json:"payurl,omitempty"`
+	QRcode    string `json:"qrcode,omitempty"`
+	UrlScheme string `json:"urlscheme,omitempty"`
+}
+
+func InitRecharge(quota int, payType string, userId int) (payUrl string, TradeNo string, err error) {
+	if quota < 1 {
+		return "", "", errors.New("至少充值1$")
+	}
+	if quota > 50 {
+		return "", "", errors.New("单次最多充值50$")
+	}
+	if userId == 0 {
+		return "", "", errors.New("无效的 user id")
+	}
+	if (payType != "wxpay") && (payType != "alipay") {
+		return "", "", errors.New("无效的支付方式")
+	}
+	RecordLog(userId, LogTypeTopup, fmt.Sprintf("创建充值请求，请求金额: %d$", quota))
+	rand.Seed(time.Now().UnixNano())
+	// 生成交易号：年月日时分秒+随机数
+	transactionID := fmt.Sprintf("%s%d", time.Now().Format("20060102150405"), rand.Intn(999999-100000)+100000)
+	initRechargeLog := RechargeLog{
+		UserId:      userId,
+		TradeNo:     transactionID,
+		Status:      1,
+		Name:        "VIP会员",
+		Quota:       quota * int(common.QuotaPerUnit),
+		CreatedTime: common.GetTimestamp(),
+	}
+	DB.Create(&initRechargeLog)
+	paymentData := map[string]string{
+		"pid":          os.Getenv("YI_PAY_PID"),
+		"type":         payType,
+		"out_trade_no": transactionID,
+		"notify_url":   "https://platform.hustgpt.com/api/user/rechargenotify",
+		"return_url":   "https://platform.hustgpt.com/panel/topup",
+		"name":         "VIP会员",
+		"money":        fmt.Sprintf("%.2f", float64(quota)*7.3),
+		"clientip":     "192.168.1.1",
+		//"param":       "", // 业务扩展参数，没有可以留空
+		"sign":      "", // 这一行在签名生成后会被更新
+		"sign_type": "MD5",
+	}
+
+	// 商户密钥KEY（这里用XXXX代替真实的KEY）
+	key := os.Getenv("YI_PAY_KEY")
+
+	// 生成签名
+	signature := GenerateSignature(paymentData, key)
+	paymentData["sign"] = signature
+
+	data := url.Values{}
+	for k, v := range paymentData {
+		data.Set(k, v)
+	}
+
+	resp, err := http.PostForm("https://yi-pay.com/mapi.php", data)
+	if err != nil {
+		fmt.Println("HTTP request failed:", err)
+		return "", "", errors.New("支付通道异常1")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body) // 读取响应体
+	if err != nil {
+		// 处理错误
+		fmt.Println("读取响应体失败:", err)
+		return "", "", errors.New("支付通道异常2")
+	}
+	respJson := RechargeResponse{}
+	err = json.Unmarshal(body, &respJson)
+	if err != nil {
+		return "", "", errors.New("支付通道异常3")
+	}
+
+	if respJson.Code != 1 {
+		return "", "", errors.New("支付通道异常4: " + respJson.Msg)
+	}
+	return respJson.PayUrl, transactionID, nil
+}
+
+func CompeleteRecharge(TradeNo string, userId int) error {
+	keyCol := "`trade_no`"
+	if common.UsingPostgreSQL {
+		keyCol = `"trade_no"`
+	}
+	rechargeLog := RechargeLog{}
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		err := tx.Set("gorm:query_option", "FOR UPDATE").Where(keyCol+" = ?", TradeNo).First(rechargeLog).Error
+		if err != nil {
+			return errors.New("未创建订单！")
+		}
+		if rechargeLog.Status != 1 {
+			return errors.New("订单已支付！")
+		}
+		err = tx.Model(&User{}).Where("id = ?", userId).Update("quota", gorm.Expr("quota + ?", rechargeLog.Quota)).Error
+		if err != nil {
+			return err
+		}
+		rechargeLog.RedeemedTime = common.GetTimestamp()
+		rechargeLog.Status = 2
+		err = tx.Save(rechargeLog).Error
+		return err
+	})
+	if err != nil {
+		return err
+	}
+	RecordLog(userId, LogTypeTopup, fmt.Sprintf("完成充值 %stkens", common.LogQuota(rechargeLog.Quota)))
+	return nil
+}
+
+//	{err = DB.Transaction(func(tx *gorm.DB) error {
+//		err := tx.Set("gorm:query_option", "FOR UPDATE").Where(keyCol+" = ?", key).First(redemption).Error
+//		if err != nil {
+//			return errors.New("无效的兑换码")
+//		}
+//		if redemption.Status != common.RedemptionCodeStatusEnabled {
+//			return errors.New("该兑换码已被使用")
+//		}
+//		err = tx.Model(&User{}).Where("id = ?", userId).Update("quota", gorm.Expr("quota + ?", redemption.Quota)).Error
+//		if err != nil {
+//			return err
+//		}
+//		redemption.RedeemedTime = common.GetTimestamp()
+//		redemption.Status = common.RedemptionCodeStatusUsed
+//		err = tx.Save(redemption).Error
+//		return err
+//	})
+//	if err != nil {
+//		return 0, errors.New("兑换失败，" + err.Error())
+//	}
+//	RecordLog(userId, LogTypeTopup, fmt.Sprintf("通过兑换码充值 %s", common.LogQuota(redemption.Quota)))
+//	return redemption.Quota, nil
+//}
+
+func GenerateSignature(parameters map[string]string, key string) string {
+	// 1. 将参数按照键名ASCII升序排序
+	keys := make([]string, 0, len(parameters))
+	for k := range parameters {
+		if k != "sign" && k != "sign_type" {
+			keys = append(keys, k)
+		}
+	}
+	slices.Sort(keys)
+	// 2. 将排序后的参数拼接成URL键值对的格式，不进行URL编码
+	var concatenatedParams string
+	for _, k := range keys {
+		value := parameters[k]
+		if value != "" {
+			concatenatedParams += fmt.Sprintf("%s=%s&", k, value)
+		}
+	}
+	concatenatedParams = strings.TrimRight(concatenatedParams, "&") // 删除最后一个"&"
+	signStr := concatenatedParams + key                             // 拼接密钥KEY
+
+	// 3. 使用MD5算法加密
+	hasher := md5.New()
+	hasher.Write([]byte(signStr))
+	sign := hex.EncodeToString(hasher.Sum(nil)) // 结果为小写
+
+	return sign
 }
 
 func (redemption *Redemption) Insert() error {

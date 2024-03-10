@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"one-api/common"
 	"one-api/model"
+	"os"
 	"strconv"
 	"time"
 
@@ -733,4 +734,65 @@ func TopUp(c *gin.Context) {
 		"message": "",
 		"data":    quota,
 	})
+}
+
+type RechargeRequest struct {
+	Amount int    `json:"amount"`
+	Type   string `json:"type"`
+}
+
+func Recharge(c *gin.Context) {
+	req := RechargeRequest{}
+	err1 := c.ShouldBindJSON(&req)
+	if err1 != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err1.Error(),
+		})
+		return
+	}
+	id := c.GetInt("id")
+	payUrl, _, err := model.InitRecharge(req.Amount, req.Type, id)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"payurl":  payUrl,
+	})
+}
+
+func RechargeNotify(c *gin.Context) {
+	id := c.GetInt("id")
+	// 使用 Query 方法获取查询参数
+	params := map[string]string{
+		"pid":          c.Query("pid"),          // 商户ID
+		"trade_no":     c.Query("trade_no"),     // 易支付订单号
+		"out_trade_no": c.Query("out_trade_no"), // 商户订单号
+		"type":         c.Query("type"),         // 支付方式
+		"name":         c.Query("name"),         // 商品名称
+		"money":        c.Query("money"),        // 商品金额
+		"trade_status": c.Query("trade_status"), // 支付状态
+		"param":        c.Query("param"),        // 业务扩展参数，可选
+		"sign":         c.Query("sign"),         // 签名字符串
+		"sign_type":    c.Query("sign_type"),    // 签名类型
+	}
+	key := os.Getenv("YI_PAY_KEY")
+	mySignature := model.GenerateSignature(params, key)
+	if c.Query("sign") != mySignature {
+		common.LogInfo(c.Request.Context(), fmt.Sprintf("收到未验证签名的支付异步通知:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
+	} else {
+		c.String(200, "success")
+		if c.Query("trade_status") == "TRADE_SUCCESS" {
+			err := model.CompeleteRecharge(c.Query("out_trade_no"), id)
+			if err != nil {
+				common.LogInfo(c.Request.Context(), fmt.Sprintf("数据库添加余额失败！:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
+			}
+		}
+	}
 }

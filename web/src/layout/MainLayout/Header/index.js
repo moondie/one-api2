@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
-import { Avatar, Box, ButtonBase } from '@mui/material';
+import { Avatar, Box, Button, ButtonBase } from '@mui/material';
 
 // project imports
 import LogoSection from '../LogoSection';
@@ -10,12 +10,49 @@ import ProfileSection from './ProfileSection';
 
 // assets
 import { IconMenu2 } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { API } from '../../../utils/api';
+import { showError } from '../../../utils/common';
+import { useSelector } from 'react-redux';
 
 // ==============================|| MAIN NAVBAR / HEADER ||============================== //
 
 const Header = ({ handleLeftDrawerToggle }) => {
   const theme = useTheme();
+  const [tokens, setTokens] = useState([]);
+  const siteInfo = useSelector((state) => state.siteInfo);
 
+  const fetchData = async () => {
+    try {
+      const res = await API.get(`/api/token/`, {
+        params: {
+          page: 1,
+          size: 10,
+          keyword: '',
+          order: '-id'
+        }
+      });
+      const { success, message, data } = res.data;
+      if (success) {
+        setTokens(data.data);
+      } else {
+        showError(message);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+  let serverAddress = '';
+  if (siteInfo?.server_address) {
+    serverAddress = siteInfo.server_address;
+  } else {
+    serverAddress = window.location.host;
+  }
   return (
     <>
       {/* logo & toggler button */}
@@ -53,8 +90,16 @@ const Header = ({ handleLeftDrawerToggle }) => {
         </ButtonBase>
       </Box>
 
-      <Box sx={{ flexGrow: 1 }} />
-      <Box sx={{ flexGrow: 1 }} />
+      <Box sx={{ flexGrow: 1, textAlign: 'center', width: '50px' }}>
+        <Button
+          variant="contained"
+          href={`https://www.hustgpt.com/#/?settings={"key":"sk-${tokens[0] && tokens[0].key}","url":"${serverAddress}"}`}
+          color="primary"
+        >
+          去聊天
+        </Button>
+      </Box>
+      <Box sx={{ flexGrow: 5 }} />
 
       <ProfileSection />
     </>

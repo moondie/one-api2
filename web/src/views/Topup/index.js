@@ -10,6 +10,9 @@ const Topup = () => {
         <Alert severity="warning">
           充值记录以及邀请记录请在日志中查询。充值记录请在日志中选择类型【充值】查询；邀请记录请在日志中选择【系统】查询{' '}
         </Alert>
+        <Alert severity="warning" sx={{ marginTop: 1 }}>
+          充值单位为美元，单次最低充值1$，最多50$。
+        </Alert>
       </Grid>
       <Grid xs={12} md={6} lg={8}>
         <Stack spacing={2}>

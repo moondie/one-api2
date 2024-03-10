@@ -43,6 +43,8 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.GET("/token", controller.GenerateAccessToken)
 				selfRoute.GET("/aff", controller.GetAffCode)
 				selfRoute.POST("/topup", controller.TopUp)
+				selfRoute.POST("/recharge", controller.Recharge)
+				selfRoute.GET("/rechargenotify", controller.RechargeNotify)
 				selfRoute.GET("/models", controller.ListModels)
 			}
 
