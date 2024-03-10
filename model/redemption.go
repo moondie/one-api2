@@ -230,7 +230,6 @@ func CompeleteRecharge(TradeNo string, userId int) error {
 		rechargeLog.RedeemedTime = common.GetTimestamp()
 		rechargeLog.Status = 2
 		err = tx.Save(rechargeLog).Error
-		RecordLog(userId, LogTypeTopup, err.Error())
 		return err
 	})
 	if err != nil {
