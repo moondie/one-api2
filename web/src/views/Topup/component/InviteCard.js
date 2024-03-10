@@ -54,7 +54,7 @@ const InviteCard = () => {
             邀请奖励
           </Typography>
           <Typography variant="body" sx={{ color: theme.palette.primary.dark }}>
-            分享您的邀请链接，邀请好友注册，即可获得奖励!
+            新注册用户有1000tokens的试用额度，使用邀请码注册，邀请者和被邀请者额外获得获得20000tokens的试用额度!刷账号将永久封禁邮箱和IP!
           </Typography>
 
           <OutlinedInput

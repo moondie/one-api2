@@ -99,7 +99,16 @@ const Header = ({ handleLeftDrawerToggle }) => {
           去聊天
         </Button>
       </Box>
-      <Box sx={{ flexGrow: 5 }} />
+      <Box sx={{ flexGrow: 4 }} />
+      <Box sx={{ flexGrow: 1, textAlign: 'center', width: '60px' }}>
+        <Button
+          variant="contained"
+          href={`/about`}
+          color="primary"
+        >
+          使用简介
+        </Button>
+      </Box>
 
       <ProfileSection />
     </>
