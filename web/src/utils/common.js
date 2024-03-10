@@ -146,7 +146,7 @@ export function calculateQuota(quota, digits = 2) {
   return (quota / quotaPerUnit).toFixed(digits);
 }
 
-export function renderQuota(quota, digits = 2) {
+export function renderQuota(quota, digits = 3) {
   let displayInCurrency = localStorage.getItem('display_in_currency');
   displayInCurrency = displayInCurrency === 'true';
   if (displayInCurrency) {
