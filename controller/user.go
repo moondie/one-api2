@@ -744,16 +744,19 @@ type RechargeRequest struct {
 func Recharge(c *gin.Context) {
 	req := RechargeRequest{}
 	err1 := c.ShouldBindJSON(&req)
+	id := c.GetInt("id")
 	if err1 != nil {
+		model.RecordLog(id, model.LogTypeTopup, err1.Error())
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"message": err1.Error(),
 		})
 		return
 	}
-	id := c.GetInt("id")
+
 	payUrl, _, err := model.InitRecharge(req.Amount, req.Type, id)
 	if err != nil {
+		model.RecordLog(id, model.LogTypeTopup, err.Error())
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"message": err.Error(),
@@ -765,6 +768,7 @@ func Recharge(c *gin.Context) {
 		"message": "",
 		"payurl":  payUrl,
 	})
+	return
 }
 
 func RechargeNotify(c *gin.Context) {
@@ -785,14 +789,18 @@ func RechargeNotify(c *gin.Context) {
 	key := os.Getenv("YI_PAY_KEY")
 	mySignature := model.GenerateSignature(params, key)
 	if c.Query("sign") != mySignature {
+		model.RecordLog(id, model.LogTypeTopup, fmt.Sprintf("收到未验证签名的支付异步通知:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
 		common.LogInfo(c.Request.Context(), fmt.Sprintf("收到未验证签名的支付异步通知:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
 	} else {
 		c.String(200, "success")
 		if c.Query("trade_status") == "TRADE_SUCCESS" {
 			err := model.CompeleteRecharge(c.Query("out_trade_no"), id)
 			if err != nil {
+				model.RecordLog(id, model.LogTypeTopup, fmt.Sprintf("数据库添加余额失败！:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
 				common.LogInfo(c.Request.Context(), fmt.Sprintf("数据库添加余额失败！:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
 			}
+		} else {
+			model.RecordLog(id, model.LogTypeTopup, "签名验真失败")
 		}
 	}
 }

@@ -120,15 +120,20 @@ type RechargeResponse struct {
 
 func InitRecharge(quota int, payType string, userId int) (payUrl string, TradeNo string, err error) {
 	if quota < 1 {
+		RecordLog(userId, LogTypeTopup, "至少充值1$")
 		return "", "", errors.New("至少充值1$")
+
 	}
 	if quota > 50 {
+		RecordLog(userId, LogTypeTopup, "单次最多充值50$")
 		return "", "", errors.New("单次最多充值50$")
 	}
 	if userId == 0 {
+		RecordLog(userId, LogTypeTopup, "无效的 user id")
 		return "", "", errors.New("无效的 user id")
 	}
 	if (payType != "wxpay") && (payType != "alipay") {
+		RecordLog(userId, LogTypeTopup, "无效的支付方式")
 		return "", "", errors.New("无效的支付方式")
 	}
 	RecordLog(userId, LogTypeTopup, fmt.Sprintf("创建充值请求，请求金额: %d$", quota))
@@ -172,23 +177,25 @@ func InitRecharge(quota int, payType string, userId int) (payUrl string, TradeNo
 
 	resp, err := http.PostForm("https://yi-pay.com/mapi.php", data)
 	if err != nil {
-		fmt.Println("HTTP request failed:", err)
+		RecordLog(userId, LogTypeTopup, "支付通道异常1")
 		return "", "", errors.New("支付通道异常1")
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body) // 读取响应体
 	if err != nil {
 		// 处理错误
-		fmt.Println("读取响应体失败:", err)
+		RecordLog(userId, LogTypeTopup, "支付通道异常2")
 		return "", "", errors.New("支付通道异常2")
 	}
 	respJson := RechargeResponse{}
 	err = json.Unmarshal(body, &respJson)
 	if err != nil {
+		RecordLog(userId, LogTypeTopup, "支付通道异常3")
 		return "", "", errors.New("支付通道异常3")
 	}
 
 	if respJson.Code != 1 {
+		RecordLog(userId, LogTypeTopup, "支付通道异常4: "+respJson.Msg)
 		return "", "", errors.New("支付通道异常4: " + respJson.Msg)
 	}
 	return respJson.PayUrl, transactionID, nil
@@ -203,18 +210,22 @@ func CompeleteRecharge(TradeNo string, userId int) error {
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		err := tx.Set("gorm:query_option", "FOR UPDATE").Where(keyCol+" = ?", TradeNo).First(rechargeLog).Error
 		if err != nil {
+			RecordLog(userId, LogTypeTopup, "未创建订单！")
 			return errors.New("未创建订单！")
 		}
 		if rechargeLog.Status != 1 {
+			RecordLog(userId, LogTypeTopup, "订单已支付！")
 			return errors.New("订单已支付！")
 		}
 		err = tx.Model(&User{}).Where("id = ?", userId).Update("quota", gorm.Expr("quota + ?", rechargeLog.Quota)).Error
 		if err != nil {
+			RecordLog(userId, LogTypeTopup, err.Error())
 			return err
 		}
 		rechargeLog.RedeemedTime = common.GetTimestamp()
 		rechargeLog.Status = 2
 		err = tx.Save(rechargeLog).Error
+		RecordLog(userId, LogTypeTopup, err.Error())
 		return err
 	})
 	if err != nil {

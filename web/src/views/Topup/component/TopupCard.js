@@ -27,7 +27,6 @@ const TopupCard = () => {
   const [topUpLink, setTopUpLink] = useState('');
   const [userQuota, setUserQuota] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [checked, setChecked] = useState(true);
   const [payType, setPayType] = React.useState('wxpay');
   const [searchParams, setSearchParams] = useSearchParams();
 
