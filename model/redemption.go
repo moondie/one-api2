@@ -206,7 +206,7 @@ func InitRecharge(quota int, payType string, userId int) (payUrl string, TradeNo
 	return "", "", errors.New("返回的是小程序支付链接")
 }
 
-func CompeleteRecharge(TradeNo string, userId int) error {
+func CompeleteRecharge(TradeNo string) (reterr error, id int) {
 	keyCol := "`trade_no`"
 	if common.UsingPostgreSQL {
 		keyCol = `"trade_no"`
@@ -215,16 +215,16 @@ func CompeleteRecharge(TradeNo string, userId int) error {
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		err := tx.Set("gorm:query_option", "FOR UPDATE").Where(keyCol+" = ?", TradeNo).First(rechargeLog).Error
 		if err != nil {
-			RecordLog(userId, LogTypeTopup, "未创建订单！")
+			RecordLog(rechargeLog.UserId, LogTypeTopup, "未创建订单！")
 			return errors.New("未创建订单！")
 		}
 		if rechargeLog.Status != 1 {
-			RecordLog(userId, LogTypeTopup, "订单已支付！")
+			RecordLog(rechargeLog.UserId, LogTypeTopup, "订单已支付！")
 			return errors.New("订单已支付！")
 		}
-		err = tx.Model(&User{}).Where("id = ?", userId).Update("quota", gorm.Expr("quota + ?", rechargeLog.Quota)).Error
+		err = tx.Model(&User{}).Where("id = ?", rechargeLog.UserId).Update("quota", gorm.Expr("quota + ?", rechargeLog.Quota)).Error
 		if err != nil {
-			RecordLog(userId, LogTypeTopup, err.Error())
+			RecordLog(rechargeLog.UserId, LogTypeTopup, err.Error())
 			return err
 		}
 		rechargeLog.RedeemedTime = common.GetTimestamp()
@@ -233,10 +233,11 @@ func CompeleteRecharge(TradeNo string, userId int) error {
 		return err
 	})
 	if err != nil {
-		return err
+		RecordLog(rechargeLog.UserId, LogTypeTopup, "充值失败！"+err.Error())
+		return err, -1
 	}
-	RecordLog(userId, LogTypeTopup, fmt.Sprintf("完成充值 %stkens", common.LogQuota(rechargeLog.Quota)))
-	return nil
+	RecordLog(rechargeLog.UserId, LogTypeTopup, fmt.Sprintf("完成充值 %stkens", common.LogQuota(rechargeLog.Quota)))
+	return nil, rechargeLog.UserId
 }
 
 //	{err = DB.Transaction(func(tx *gorm.DB) error {

@@ -788,7 +788,6 @@ func Recharge(c *gin.Context) {
 }
 
 func RechargeNotify(c *gin.Context) {
-	id := c.GetInt("id")
 	// 使用 Query 方法获取查询参数
 	params := map[string]string{
 		"pid":          c.Query("pid"),          // 商户ID
@@ -805,18 +804,16 @@ func RechargeNotify(c *gin.Context) {
 	key := os.Getenv("YI_PAY_KEY")
 	mySignature := model.GenerateSignature(params, key)
 	if c.Query("sign") != mySignature {
-		model.RecordLog(id, model.LogTypeTopup, fmt.Sprintf("收到未验证签名的支付异步通知:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
 		common.LogInfo(c.Request.Context(), fmt.Sprintf("收到未验证签名的支付异步通知:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
 	} else {
 		c.String(200, "success")
 		if c.Query("trade_status") == "TRADE_SUCCESS" {
-			err := model.CompeleteRecharge(c.Query("out_trade_no"), id)
+			err, _ := model.CompeleteRecharge(c.Query("out_trade_no"))
 			if err != nil {
-				model.RecordLog(id, model.LogTypeTopup, fmt.Sprintf("数据库添加余额失败！:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
 				common.LogInfo(c.Request.Context(), fmt.Sprintf("数据库添加余额失败！:pid=%s,out_trade_no=%s", c.Query("pid"), c.Query("out_trade_no")))
 			}
 		} else {
-			model.RecordLog(id, model.LogTypeTopup, "签名验真失败")
+			common.LogInfo(c.Request.Context(), "签名验真失败")
 		}
 	}
 }
