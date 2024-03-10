@@ -29,7 +29,7 @@ import { useSearchParams } from 'react-router-dom';
 
 const QRModal = ({ open, QRString, onCancel, onOk }) => {
   return (
-    <Dialog open={open} onClose={onCancel} fullWidth maxWidth={'md'}>
+    <Dialog open={open} onClose={onCancel} sx={{ width: '400px' }}>
       <DialogTitle sx={{ margin: '0px', fontWeight: 700, lineHeight: '1.55556', padding: '24px', fontSize: '1.125rem' }}>
         微信支付二维码
       </DialogTitle>
