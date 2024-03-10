@@ -198,7 +198,12 @@ func InitRecharge(quota int, payType string, userId int) (payUrl string, TradeNo
 		RecordLog(userId, LogTypeTopup, "支付通道异常4: "+respJson.Msg)
 		return "", "", errors.New("支付通道异常4: " + respJson.Msg)
 	}
-	return respJson.PayUrl, transactionID, nil
+	if respJson.PayUrl != "" {
+		return respJson.PayUrl, transactionID, nil
+	} else if respJson.QRcode != "" {
+		return respJson.QRcode, transactionID, nil
+	}
+	return "", "", errors.New("返回的是小程序支付链接")
 }
 
 func CompeleteRecharge(TradeNo string, userId int) error {
@@ -206,7 +211,7 @@ func CompeleteRecharge(TradeNo string, userId int) error {
 	if common.UsingPostgreSQL {
 		keyCol = `"trade_no"`
 	}
-	rechargeLog := RechargeLog{}
+	rechargeLog := &RechargeLog{}
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		err := tx.Set("gorm:query_option", "FOR UPDATE").Where(keyCol+" = ?", TradeNo).First(rechargeLog).Error
 		if err != nil {

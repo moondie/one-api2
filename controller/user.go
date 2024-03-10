@@ -171,9 +171,25 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
+	cleanToken := model.Token{
+		UserId:         c.GetInt("id"),
+		Name:           "default",
+		Key:            common.GenerateKey(),
+		CreatedTime:    common.GetTimestamp(),
+		AccessedTime:   common.GetTimestamp(),
+		ExpiredTime:    -1,
+		RemainQuota:    0,
+		UnlimitedQuota: true,
+	}
+	if err := cleanToken.Insert(); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "",
+		})
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "",
+		"message": "can't create default token for new user",
 	})
 }
 
