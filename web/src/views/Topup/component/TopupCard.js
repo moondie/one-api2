@@ -27,14 +27,14 @@ import React, { useEffect, useState } from 'react';
 import { showError, showInfo, showSuccess, renderQuota } from 'utils/common';
 import { useSearchParams } from 'react-router-dom';
 
-const QRModal = ({ open, QRString, onCancel, onOk }) => {
+const QRModal = ({ open, QRString, onCancel, onOk, quota }) => {
   return (
-    <Dialog open={open} onClose={onCancel} sx={{ width: '400px' }}>
-      <DialogTitle sx={{ margin: '0px', fontWeight: 700, lineHeight: '1.55556', padding: '24px', fontSize: '1.125rem' }}>
-        微信支付二维码
+    <Dialog open={open} onClose={onCancel} sx={{ textAlign: 'center' }}>
+      <DialogTitle sx={{ fontWeight: 700, lineHeight: '1.55556', padding: '24px', fontSize: '1.125rem' }}>
+        微信支付二维码: 请支付:{quota}美元
       </DialogTitle>
       <Divider />
-      <DialogContent>
+      <DialogContent sx={{width:'400px'}}>
         <QRCode value={QRString} />
         <DialogActions>
           <Button onClick={onCancel}>取消</Button>
@@ -178,10 +178,10 @@ const TopupCard = () => {
           setShowModal(false);
         }}
         onOk={() => {
-          setUserQuota(userQuota + redemptionCode);
-          setShowModal(false);
+          window.location.reload();
         }}
         QRString={qrcode}
+        quota={redemptionCode}
       />
     </>
   );

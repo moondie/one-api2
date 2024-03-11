@@ -89,9 +89,10 @@ const Header = ({ handleLeftDrawerToggle }) => {
           </Avatar>
         </ButtonBase>
       </Box>
-
-      <Box sx={{ flexGrow: 1, textAlign: 'center', width: '50px' }}>
+      <Box sx={{ flexGrow: 1 }} />
+      <Box sx={{ textAlign: 'center' }}>
         <Button
+          sx={{ marginRight: '10px', borderRadius: '15px' }}
           variant="contained"
           href={`https://www.hustgpt.com/#/?settings={"key":"sk-${tokens[0] && tokens[0].key}","url":"${serverAddress}"}`}
           color="primary"
@@ -99,9 +100,9 @@ const Header = ({ handleLeftDrawerToggle }) => {
           去聊天
         </Button>
       </Box>
-      <Box sx={{ flexGrow: 4 }} />
-      <Box sx={{ flexGrow: 1, textAlign: 'center', width: '60px' }}>
+      <Box sx={{ textAlign: 'center' }}>
         <Button
+          sx={{ marginRight: '10px', borderRadius: '15px' }}
           variant="contained"
           href={`/about`}
           color="primary"
