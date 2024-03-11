@@ -113,6 +113,7 @@ func GitHubOAuth(c *gin.Context) {
 	user := model.User{
 		GitHubId: githubUser.Login,
 	}
+
 	if model.IsGitHubIdAlreadyTaken(user.GitHubId) {
 		err := user.FillUserByGitHubId()
 		if err != nil {
@@ -134,12 +135,26 @@ func GitHubOAuth(c *gin.Context) {
 			user.Role = common.RoleCommonUser
 			user.Status = common.UserStatusEnabled
 
-			if err, _ := user.Insert(0); err != nil {
+			err, id := user.Insert(0)
+			if err != nil {
 				c.JSON(http.StatusOK, gin.H{
 					"success": false,
 					"message": err.Error(),
 				})
 				return
+			}
+			cleanToken := model.Token{
+				UserId:         id,
+				Name:           "default",
+				Key:            common.GenerateKey(),
+				CreatedTime:    common.GetTimestamp(),
+				AccessedTime:   common.GetTimestamp(),
+				ExpiredTime:    -1,
+				RemainQuota:    0,
+				UnlimitedQuota: true,
+			}
+			if err := cleanToken.Insert(); err != nil {
+
 			}
 		} else {
 			c.JSON(http.StatusOK, gin.H{
