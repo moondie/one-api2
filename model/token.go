@@ -61,12 +61,13 @@ func ValidateUserToken(key string) (token *Token, err error) {
 		}
 		return nil, errors.New("令牌验证失败")
 	}
-	if token.Status == common.TokenStatusExhausted {
-		return nil, errors.New("该令牌额度已用尽")
-	} else if token.Status == common.TokenStatusExpired {
+	//if token.Status == common.TokenStatusExhausted {
+	//	return nil, errors.New("该令牌额度已用尽")
+	//} else
+	if token.Status == common.TokenStatusExpired {
 		return nil, errors.New("该令牌已过期")
 	}
-	if token.Status != common.TokenStatusEnabled {
+	if token.Status != common.TokenStatusEnabled && token.Status != common.TokenStatusExhausted {
 		return nil, errors.New("该令牌状态不可用")
 	}
 	if token.ExpiredTime != -1 && token.ExpiredTime < common.GetTimestamp() {
@@ -88,7 +89,7 @@ func ValidateUserToken(key string) (token *Token, err error) {
 				common.SysError("failed to update token status" + err.Error())
 			}
 		}
-		return nil, errors.New("该令牌额度已用尽")
+		//return nil, errors.New("该令牌额度已用尽")
 	}
 	return token, nil
 }

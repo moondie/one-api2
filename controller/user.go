@@ -605,7 +605,6 @@ func ManageUser(c *gin.Context) {
 	}
 	switch req.Action {
 	case "disable":
-		user.Status = common.UserStatusDisabled
 		if user.Role == common.RoleRootUser {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,
@@ -613,6 +612,7 @@ func ManageUser(c *gin.Context) {
 			})
 			return
 		}
+		user.Status = common.UserStatusDisabled
 	case "enable":
 		user.Status = common.UserStatusEnabled
 	case "delete":

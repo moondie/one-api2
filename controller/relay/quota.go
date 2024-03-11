@@ -119,7 +119,7 @@ func (q *QuotaInfo) completedQuotaConsumption(usage *types.Usage, tokenName stri
 	if err != nil {
 		return errors.New("error consuming token remain quota: " + err.Error())
 	}
-	if quota != 0 {
+	if quota >= 0 {
 		requestTime := 0
 		requestStartTimeValue := ctx.Value("requestStartTime")
 		if requestStartTimeValue != nil {

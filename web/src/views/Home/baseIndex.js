@@ -22,6 +22,22 @@ const BaseIndex = () => (
               All in one 的 OpenAI 接口 <br />
               整合各种 API 访问方式 <br />
             </Typography>
+            <Typography>
+              <Button
+                variant="contained"
+                href="/login"
+                sx={{ backgroundColor: '#24292e', color: '#fff', width: '122px', height: '50px', boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)' }}
+              >
+                登录
+              </Button>
+              <Button
+                variant="contained"
+                href="/register"
+                sx={{ backgroundColor: '#fff', color: '#24292e', width: '60px', height: '50px', boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)', marginLeft: '20px' }}
+              >
+                注册
+              </Button>
+            </Typography>
           </Stack>
         </Grid>
       </Grid>
