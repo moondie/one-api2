@@ -14,7 +14,8 @@ import {
   DialogTitle,
   Divider,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Link
 } from '@mui/material';
 import { IconWallet } from '@tabler/icons-react';
 import { useTheme } from '@mui/material/styles';
@@ -34,8 +35,12 @@ const QRModal = ({ open, QRString, onCancel, onOk, quota }) => {
         微信支付二维码: 请支付:{quota}美元
       </DialogTitle>
       <Divider />
-      <DialogContent sx={{width:'400px'}}>
+      <DialogContent sx={{ maxWidth: '400px' }}>
         <QRCode value={QRString} />
+        <Divider sx={{ marginTop: '10px' }} />
+        <Link href={QRString}>
+          <div style={{ marginTop: '10px' }}>手机用户点我唤起微信支付</div>
+        </Link>
         <DialogActions>
           <Button onClick={onCancel}>取消</Button>
           <Button onClick={onOk} type="submit" variant="contained" color="primary">
@@ -84,7 +89,6 @@ const TopupCard = () => {
         if (payurl.startsWith('weixin://')) {
           setQrcode(payurl);
           setShowModal(true);
-          window.location.href = payurl;
         } else {
           window.location.href = payurl;
         }
