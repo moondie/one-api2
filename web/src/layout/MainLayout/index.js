@@ -90,11 +90,11 @@ const MainLayout = () => {
       <Main theme={theme} open={leftDrawerOpened}>
         {/* breadcrumb */}
         <Breadcrumbs separator={IconChevronRight} navigation={navigation} icon title rightAlign />
-        {/*<AuthGuard>*/}
+        <AuthGuard>
           <AdminContainer>
             <Outlet />
           </AdminContainer>
-        {/*</AuthGuard>*/}
+        </AuthGuard>
       </Main>
     </Box>
   );
