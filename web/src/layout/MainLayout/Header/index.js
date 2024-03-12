@@ -20,27 +20,32 @@ import { useSelector } from 'react-redux';
 
 const Header = ({ handleLeftDrawerToggle }) => {
   const theme = useTheme();
-  const [tokens, setTokens] = useState([]);
+  const [token, setToken] = useState('');
   const siteInfo = useSelector((state) => state.siteInfo);
 
   const fetchData = async () => {
-    try {
-      const res = await API.get(`/api/token/`, {
-        params: {
-          page: 1,
-          size: 10,
-          keyword: '',
-          order: '-id'
+    if (!localStorage.getItem('first_apikey')) {
+      try {
+        const res = await API.get(`/api/token/`, {
+          params: {
+            page: 1,
+            size: 10,
+            keyword: '',
+            order: '-id'
+          }
+        });
+        const { success, message, data } = res.data;
+        if (success) {
+          localStorage.setItem('first_apikey', data.data[0].key);
+          setToken(data.data[0].key);
+        } else {
+          showError(message);
         }
-      });
-      const { success, message, data } = res.data;
-      if (success) {
-        setTokens(data.data);
-      } else {
-        showError(message);
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
+    } else {
+      setToken(localStorage.getItem('first_apikey'));
     }
   };
 
@@ -94,19 +99,14 @@ const Header = ({ handleLeftDrawerToggle }) => {
         <Button
           sx={{ marginRight: '10px', borderRadius: '15px' }}
           variant="contained"
-          href={`https://www.hustgpt.com/#/?settings={"key":"sk-${tokens[0] && tokens[0].key}","url":"${serverAddress}"}`}
+          href={`https://www.hustgpt.com/#/?settings={"key":"sk-${token}","url":"${serverAddress}"}`}
           color="primary"
         >
           去聊天
         </Button>
       </Box>
       <Box sx={{ textAlign: 'center' }}>
-        <Button
-          sx={{ marginRight: '10px', borderRadius: '15px' }}
-          variant="contained"
-          href={`/about`}
-          color="primary"
-        >
+        <Button sx={{ marginRight: '10px', borderRadius: '15px' }} variant="contained" href={`/about`} color="primary">
           使用简介
         </Button>
       </Box>
