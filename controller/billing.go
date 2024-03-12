@@ -14,9 +14,19 @@ func GetSubscription(c *gin.Context) {
 	var err error
 	var token *model.Token
 	var expiredTime int64
-	if common.DisplayTokenStatEnabled {
-		tokenId := c.GetInt("token_id")
-		token, err = model.GetTokenById(tokenId)
+	tokenId := c.GetInt("token_id")
+	token, err = model.GetTokenById(tokenId)
+	if err != nil {
+		openAIError := types.OpenAIError{
+			Message: err.Error(),
+			Type:    "one_api_error",
+		}
+		c.JSON(200, gin.H{
+			"error": openAIError,
+		})
+		return
+	}
+	if common.DisplayTokenStatEnabled && !token.UnlimitedQuota {
 		expiredTime = token.ExpiredTime
 		remainQuota = token.RemainQuota
 		usedQuota = token.UsedQuota
@@ -26,7 +36,7 @@ func GetSubscription(c *gin.Context) {
 		if err != nil {
 			openAIError := types.OpenAIError{
 				Message: err.Error(),
-				Type:    "upstream_error",
+				Type:    "one_api_error",
 			}
 			c.JSON(200, gin.H{
 				"error": openAIError,
@@ -41,7 +51,7 @@ func GetSubscription(c *gin.Context) {
 	if err != nil {
 		openAIError := types.OpenAIError{
 			Message: err.Error(),
-			Type:    "upstream_error",
+			Type:    "one_api_error",
 		}
 		c.JSON(200, gin.H{
 			"error": openAIError,
@@ -71,9 +81,19 @@ func GetUsage(c *gin.Context) {
 	var quota int
 	var err error
 	var token *model.Token
-	if common.DisplayTokenStatEnabled {
-		tokenId := c.GetInt("token_id")
-		token, err = model.GetTokenById(tokenId)
+	tokenId := c.GetInt("token_id")
+	token, err = model.GetTokenById(tokenId)
+	if err != nil {
+		openAIError := types.OpenAIError{
+			Message: err.Error(),
+			Type:    "one_api_error",
+		}
+		c.JSON(200, gin.H{
+			"error": openAIError,
+		})
+		return
+	}
+	if common.DisplayTokenStatEnabled && !token.UnlimitedQuota {
 		quota = token.UsedQuota
 	} else {
 		userId := c.GetInt("id")
