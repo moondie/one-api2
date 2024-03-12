@@ -32,10 +32,10 @@ const Header = () => {
       <Box sx={{ flexGrow: 1 }} />
       <Box sx={{ flexGrow: 1 }} />
       <Stack spacing={2} direction="row">
-        <Button component={Link} variant="text" to="/" color={pathname === '/' ? 'primary' : 'inherit'}>
+        <Button component={Link} sx={{ borderRadius: '20px' }} variant="outlined" to="/" color={pathname === '/' ? 'inherit' : 'primary'}>
           首页
         </Button>
-        <Button component={Link} variant="text" to="/about" color={pathname === '/about' ? 'primary' : 'inherit'}>
+        <Button component={Link} sx={{ borderRadius: '20px' }} variant="outlined" to="/about" color={pathname === '/about' ? 'inherit' : 'primary'}>
           使用简介
         </Button>
         {account.user ? (
