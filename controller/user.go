@@ -185,13 +185,26 @@ func Register(c *gin.Context) {
 	if err := cleanToken.Insert(); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"message": "",
+			"message": "can't create default token for new user",
+		})
+		return
+	}
+
+	cleanTimes := model.FreeTimes{
+		UserId:     id,
+		ChangeTime: common.GetTimestamp(),
+		Times:      30,
+	}
+	if err := cleanTimes.Insert(); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "can't create default times for new user",
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "can't create default token for new user",
+		"message": "",
 	})
 }
 

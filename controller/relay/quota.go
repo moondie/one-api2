@@ -80,6 +80,39 @@ func (q *QuotaInfo) preQuotaConsumption() *types.OpenAIErrorWithStatusCode {
 		return common.ErrorWrapper(errors.New("token is not enough"), "insufficient_token_quota", http.StatusForbidden)
 	}
 
+	if q.modelRatio[0] == 0 {
+		times, err := model.GetTimesByUserId(q.userId)
+		if err != nil {
+			return common.ErrorWrapper(err, "get_Times_failed", http.StatusInternalServerError)
+		}
+		t := time.Unix(times.ChangeTime, 0)
+
+		// 创建中国时区的 Location
+		loc, _ := time.LoadLocation("Asia/Shanghai")
+
+		// 将 t 转换为中国时区的时间
+		t = t.In(loc)
+
+		// 获取今天的日期
+		now := time.Now().In(loc)
+		year, month, day := now.Date()
+
+		// 比较时间是否在今天
+		tYear, tMonth, tDay := t.Date()
+		if !(year == tYear && month == tMonth && day == tDay) {
+			times.Times = 30
+		} else {
+			if times.Times <= 0 {
+				return common.ErrorWrapper(err, "free time is used out!", http.StatusForbidden)
+			}
+		}
+		times.ChangeTime = common.GetTimestamp()
+		err = times.Update()
+		if err != nil {
+			return common.ErrorWrapper(err, "update_Times_failed", http.StatusInternalServerError)
+		}
+	}
+
 	err = model.CacheDecreaseUserQuota(q.userId, q.preConsumedQuota)
 	if err != nil {
 		return common.ErrorWrapper(err, "decrease_user_quota_failed", http.StatusInternalServerError)
@@ -147,6 +180,16 @@ func (q *QuotaInfo) completedQuotaConsumption(usage *types.Usage, tokenName stri
 		model.RecordConsumeLog(ctx, q.userId, q.channelId, promptTokens, completionTokens, q.modelName, tokenName, quota, logContent, requestTime)
 		model.UpdateUserUsedQuotaAndRequestCount(q.userId, quota)
 		model.UpdateChannelUsedQuota(q.channelId, quota)
+
+		times, err := model.GetTimesByUserId(q.userId)
+		if err != nil {
+			return errors.New("error get times: " + err.Error())
+		}
+		times.Times = times.Times - 1
+		err = times.Update()
+		if err != nil {
+			return errors.New("error update times: " + err.Error())
+		}
 	}
 
 	return nil

@@ -154,7 +154,23 @@ func GitHubOAuth(c *gin.Context) {
 				UnlimitedQuota: true,
 			}
 			if err := cleanToken.Insert(); err != nil {
-
+				c.JSON(http.StatusOK, gin.H{
+					"success": true,
+					"message": "can't create default token for new user",
+				})
+				return
+			}
+			cleanTimes := model.FreeTimes{
+				UserId:     id,
+				ChangeTime: common.GetTimestamp(),
+				Times:      30,
+			}
+			if err := cleanTimes.Insert(); err != nil {
+				c.JSON(http.StatusOK, gin.H{
+					"success": true,
+					"message": "can't create default times for new user",
+				})
+				return
 			}
 		} else {
 			c.JSON(http.StatusOK, gin.H{
