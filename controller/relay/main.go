@@ -88,7 +88,7 @@ func RelayHandler(relay RelayBaseInterface) (err *types.OpenAIErrorWithStatusCod
 	relay.getProvider().SetUsage(usage)
 
 	var quotaInfo *QuotaInfo
-	quotaInfo, err = generateQuotaInfo(relay.getContext(), relay.getModelName(), promptTokens)
+	quotaInfo, err = generateQuotaInfo(relay.getContext(), relay.getOriginalModel(), promptTokens)
 	if err != nil {
 		done = true
 		return

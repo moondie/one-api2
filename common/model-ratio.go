@@ -262,9 +262,6 @@ func GetModelRatio(name string) []float64 {
 	if strings.HasPrefix(name, "qwen-") && strings.HasSuffix(name, "-internet") {
 		name = strings.TrimSuffix(name, "-internet")
 	}
-	if strings.HasSuffix(name, "-low") {
-		name = strings.TrimSuffix(name, "-low")
-	}
 	ratio, ok := ModelRatio[name]
 	if !ok {
 		SysError("model ratio not found: " + name)
