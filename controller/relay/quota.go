@@ -9,6 +9,7 @@ import (
 	"one-api/common"
 	"one-api/model"
 	"one-api/types"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -185,7 +186,10 @@ func (q *QuotaInfo) completedQuotaConsumption(usage *types.Usage, tokenName stri
 		if err != nil {
 			return errors.New("error get times: " + err.Error())
 		}
-		times.Times = times.Times - 1
+		if os.Getenv("ENABLE_LIMIT_FREE") == "true" {
+			times.Times = times.Times - 1
+		}
+
 		err = times.Update()
 		if err != nil {
 			return errors.New("error update times: " + err.Error())
