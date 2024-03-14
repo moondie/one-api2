@@ -38,7 +38,7 @@ const QRModal = ({ open, QRString, onCancel, onOk, quota }) => {
       <DialogContent sx={{ maxWidth: '400px' }}>
         <QRCode value={QRString} />
         <Divider sx={{ marginTop: '10px' }} />
-        <span style={{ borderRadius: '5px', backgroundColor: 'gray', padding: '2px' }}>dsfdas{QRString}</span>
+        <span style={{ borderRadius: '5px', backgroundColor: 'gray', padding: '2px' }}>{QRString}</span>
         <Link href={QRString}>
           <div style={{ marginTop: '10px' }}>
             扫码或复制上方链接，
