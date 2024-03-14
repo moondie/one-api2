@@ -38,8 +38,13 @@ const QRModal = ({ open, QRString, onCancel, onOk, quota }) => {
       <DialogContent sx={{ maxWidth: '400px' }}>
         <QRCode value={QRString} />
         <Divider sx={{ marginTop: '10px' }} />
+        <span style={{ borderRadius: '5px', backgroundColor: 'gray', padding: '2px' }}>dsfdas{QRString}</span>
         <Link href={QRString}>
-          <div style={{ marginTop: '10px' }}>手机用户点我唤起微信支付</div>
+          <div style={{ marginTop: '10px' }}>
+            扫码或复制上方链接，
+            <br />
+            点我唤起微信，把链接发给自己并打开
+          </div>
         </Link>
         <DialogActions>
           <Button onClick={onCancel}>取消</Button>
